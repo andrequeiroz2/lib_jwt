@@ -1,24 +1,24 @@
-mod components;
-mod error;
+pub mod components;
+pub mod error;
 
 use std::str::FromStr;
 use components::claims::JwtClaims;
 use components::key::PRIVATE_KEY;
-use error::EnumError;
+use error::AuthError;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, Algorithm};
 
 
-fn jwt_encode(algorithm: &str, claims: JwtClaims) -> Result<String, EnumError> {
+pub fn jwt_encode(algorithm: &str, claims: JwtClaims) -> Result<String, AuthError> {
 
     let private_key= PRIVATE_KEY.get();
 
     if private_key.is_none() {
-        Err(EnumError::KeyError("Private key is not set".to_string()))?
+        Err(AuthError::KeyError("Private key is not set".to_string()))?
     }
 
     let algorithm = match Algorithm::from_str(algorithm){
         Ok(alg) => alg,
-        Err(err) => Err(EnumError::AlgorithmError(format!("Invalid algorithm: {}", err)))?
+        Err(err) => Err(AuthError::AlgorithmError(format!("Invalid algorithm: {}", err)))?
     };
     
     let encode = encode(
@@ -29,21 +29,21 @@ fn jwt_encode(algorithm: &str, claims: JwtClaims) -> Result<String, EnumError> {
 
     match encode {
         Ok(token) => Ok(token),
-        Err(err) => Err(EnumError::EncodeError(format!("Error encoding token: {}", err.to_string())))?
+        Err(err) => Err(AuthError::EncodeError(format!("Error encoding token: {}", err.to_string())))?
     }
 }
 
-fn jwt_decode(algorithm: &str, token: String) -> Result<JwtClaims, EnumError> {
+pub fn jwt_decode(algorithm: &str, token: String) -> Result<JwtClaims, AuthError> {
 
     let private_key= PRIVATE_KEY.get();
 
     if private_key.is_none() {
-        Err(EnumError::KeyError("Private key is not set".to_string()))?
+        Err(AuthError::KeyError("Private key is not set".to_string()))?
     }
 
     let algorithm = match Algorithm::from_str(algorithm) {
         Ok(alg) => alg,
-        Err(err) => Err(EnumError::AlgorithmError(format!("Invalid algorithm: {}", err)))?
+        Err(err) => Err(AuthError::AlgorithmError(format!("Invalid algorithm: {}", err)))?
         
     };
 
@@ -55,7 +55,7 @@ fn jwt_decode(algorithm: &str, token: String) -> Result<JwtClaims, EnumError> {
 
     match decode {
         Ok(claims) => Ok(claims.claims),
-        Err(err) => Err(EnumError::DecodeError(format!("Error decoding token: {}", err.to_string())))?
+        Err(err) => Err(AuthError::DecodeError(format!("Error decoding token: {}", err.to_string())))?
         
     }
 }

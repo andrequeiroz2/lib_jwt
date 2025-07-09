@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 
-use crate::error::EnumError;
+use crate::error::AuthError;
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -30,7 +30,7 @@ impl JwtClaims {
         nbf: Option<usize>,
         sub: Option<String>,
         inf: Option<HashMap<String, String>>
-    ) -> Result<Self, EnumError> {
+    ) -> Result<Self, AuthError> {
         
         let claims = JwtClaims{aud, exp, iat, iss, nbf, sub, inf};
 
@@ -40,23 +40,23 @@ impl JwtClaims {
 
     }
 
-    fn validate(&self) -> Result<(), EnumError>{
+    fn validate(&self) -> Result<(), AuthError>{
         
         let now = jsonwebtoken::get_current_timestamp() as usize;
 
         if self.exp <= now {
-            Err(EnumError::ClaimsValidateExp)?;
+            Err(AuthError::ClaimsValidateExp)?;
         }
 
         if let Some(nbf) = self.nbf {
             if nbf > now {
-                return Err(EnumError::ClaimsValidateNbf)?;
+                return Err(AuthError::ClaimsValidateNbf)?;
             }
         }
 
         if let Some(iat) = self.iat {
             if iat > now {
-                return Err(EnumError::ClaimsValidateIat)?;
+                return Err(AuthError::ClaimsValidateIat)?;
             }
         }
         

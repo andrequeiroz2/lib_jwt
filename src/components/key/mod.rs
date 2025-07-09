@@ -2,7 +2,7 @@ use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::Path;
 use std::sync::OnceLock;
-use crate::error::EnumError;
+use crate::error::AuthError;
 
 pub static PRIVATE_KEY: OnceLock<Vec<u8>> = OnceLock::new();
 pub static PUBLIC_KEY: OnceLock<Vec<u8>> = OnceLock::new();
@@ -13,23 +13,23 @@ pub static PUBLIC_KEY_PATH: OnceLock<String> = OnceLock::new();
 pub struct JwtPath{}
 
 impl JwtPath {
-    pub fn set_private_key_path(path: &str) -> Result<(), EnumError> {
+    pub fn set_private_key_path(path: &str) -> Result<(), AuthError> {
         
         let path= PRIVATE_KEY_PATH.set(path.to_string());
 
         match path {
             Ok(_) => Ok(()),
-            Err(err) => Err(EnumError::PathError(format!("Error set private key path: {}", err)))?
+            Err(err) => Err(AuthError::PathError(format!("Error set private key path: {}", err)))?
         }
     }
 
-    pub fn set_public_key_path(path: &str) -> Result<(), EnumError> {
+    pub fn set_public_key_path(path: &str) -> Result<(), AuthError> {
         
         let path= PUBLIC_KEY_PATH.set(path.to_string());
 
         match path {
             Ok(_) => Ok(()),
-            Err(err) => Err(EnumError::PathError(format!("Error set public key path: {}", err)))?
+            Err(err) => Err(AuthError::PathError(format!("Error set public key path: {}", err)))?
         }
     }
 }
@@ -38,13 +38,13 @@ pub struct Jwtkey{}
 
 impl Jwtkey {
 
-    pub fn set_private_key() -> Result<(), EnumError> {
+    pub fn set_private_key() -> Result<(), AuthError> {
 
         let path = PRIVATE_KEY_PATH.get();
 
         let path = match path {
             Some(path) => path,
-            None => Err(EnumError::PathError("Private key path is not set".to_string()))?
+            None => Err(AuthError::PathError("Private key path is not set".to_string()))?
         };
 
         match set_path(path){    
@@ -52,7 +52,7 @@ impl Jwtkey {
 
                 match PRIVATE_KEY.set(vec_key){
                     Ok(_) => Ok(()),
-                    Err(_) => Err(EnumError::KeyError("Private key already initialized".to_string()))?
+                    Err(_) => Err(AuthError::KeyError("Private key already initialized".to_string()))?
                 }
             },
             
@@ -60,13 +60,13 @@ impl Jwtkey {
         }
     }
 
-    pub fn set_public_key() -> Result<(), EnumError> {
+    pub fn set_public_key() -> Result<(), AuthError> {
 
         let path = PUBLIC_KEY_PATH.get();
 
         let path = match path {
             Some(path) => path,
-            None => Err(EnumError::PathError("Public key path is not set".to_string()))?
+            None => Err(AuthError::PathError("Public key path is not set".to_string()))?
         };
 
         match set_path(path){    
@@ -74,7 +74,7 @@ impl Jwtkey {
 
                 match PUBLIC_KEY.set(vec_key){
                     Ok(_) => Ok(()),
-                    Err(_) => Err(EnumError::KeyError("Public key already initialized".to_string()))?
+                    Err(_) => Err(AuthError::KeyError("Public key already initialized".to_string()))?
                 }
             },
             
@@ -84,26 +84,26 @@ impl Jwtkey {
 }
 
 
-fn set_path(path: &str) -> Result<Vec<u8>, EnumError>{
+fn set_path(path: &str) -> Result<Vec<u8>, AuthError>{
     
     let path = Path::new(path);
     
     if path.extension().and_then(|ext| ext.to_str()) != Some("pem") {
-        Err(EnumError::KeyInvalidExtension)?;
+        Err(AuthError::KeyInvalidExtension)?;
     }
 
     let file = &OpenOptions::new().read(true).open(path);
 
     let mut file_ok = match file {
         Ok(file) => file,
-        Err(err) => Err(EnumError::FileError(err.to_string()))?,
+        Err(err) => Err(AuthError::FileError(err.to_string()))?,
     };
     
     let mut buffer = Vec::new();
 
     match file_ok.read_to_end(&mut buffer){
         Ok(_) => Ok(buffer),
-        Err(err) => Err(EnumError::FileError(err.to_string()))?,
+        Err(err) => Err(AuthError::FileError(err.to_string()))?,
     }
 }
 
